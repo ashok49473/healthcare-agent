@@ -40,7 +40,7 @@ OPENAI_MODEL=gpt-4
 ### Run
 
 ```bash
-uv run chainlit run app.py
+uv run chainlit run ui/app.py
 ```
 
 Access the UI at `http://localhost:8000`
