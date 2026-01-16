@@ -3,7 +3,6 @@ import chainlit as cl
 from agents.graph import healthcare_graph
 from agents.state import AgentState
 import logging
-from typing import Dict, Any
 
 # Configure logging
 logging.basicConfig(
@@ -20,44 +19,17 @@ async def on_chat_start():
     cl.user_session.set("conversation_history", [])
 
     # Send welcome message
-    welcome_message = """# 🏥 FHIR Healthcare Data Assistant
+    welcome_message = """AI assistant for retrieving patient data from FHIR R4 servers.
 
-Welcome! I'm your AI assistant for retrieving and analyzing healthcare data from the FHIR R4 server.
+**What I can retrieve:**
+- Patient demographics, observations, conditions, encounters, medications
 
-## 🎯 What I Can Do
-
-I can help you retrieve **real patient data** from the public FHIR server by:
-
-- 📋 **Patient Demographics**: Get patient information by ID
-- 🔬 **Observations**: View vital signs, lab results, and measurements  
-- 🏥 **Conditions**: See diagnoses and medical conditions
-- 👨‍⚕️ **Encounters**: Check medical visits and appointments
-- 💊 **Medications**: Review medication requests and prescriptions
-- 🔍 **Complete Summary**: Get all data for a patient at once
-
-## 📝 How to Use
-
-Simply provide a **patient ID** and ask your question:
-
-**Examples:**
+**Example queries:**
 - "Get all data for patient 592598"
 - "Show me observations for patient 1234567"
-- "What conditions does patient 592598 have?"
 - "Search for patients with family name Smith"
 
-## ⚠️ Important Notes
-
-- ✅ All data comes from: **https://hapi.fhir.org/baseR4**
-- ✅ I only provide information from actual FHIR data
-- ❌ I do **NOT** provide medical diagnosis or advice
-- ❌ I will **NOT** make up or guess patient data
-- ℹ️ If data is unavailable, I'll clearly tell you
-
-💡 **Tip**: Try patient ID **592598** - it's a test patient with sample data!
-
----
-
-**Need help?** Just ask me to explain what I can do!
+**Note:** Data retrieved from https://hapi.fhir.org/baseR4 (test server). No medical advice provided.
 """
 
     await cl.Message(content=welcome_message).send()
@@ -78,7 +50,7 @@ async def on_message(message: cl.Message):
     })
 
     # Show processing message
-    processing_msg = cl.Message(content="🤔 Processing your request...")
+    processing_msg = cl.Message(content="Processing...")
     await processing_msg.send()
 
     try:
@@ -122,7 +94,7 @@ async def on_message(message: cl.Message):
 
     except Exception as e:
         logger.error(f"Error processing message: {e}", exc_info=True)
-        error_message = f"❌ An error occurred: {str(e)}\n\nPlease try again or rephrase your question."
+        error_message = f"Error: {str(e)}\n\nPlease try again or rephrase your question."
         processing_msg.content = error_message
         await processing_msg.update()
 
