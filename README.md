@@ -1,135 +1,75 @@
-# Healthcare FHIR Data Agent 🏥
+# Healthcare FHIR Agent
 
-A specialized AI-powered healthcare agent that retrieves and analyzes **real patient data** from the public FHIR R4 server. Built with LangGraph, OpenAI, and Chainlit.
+AI-powered healthcare agent for retrieving and analyzing patient data from FHIR R4 servers. Built with LangGraph, OpenAI, and Chainlit.
 
-## 🎯 Key Features
+## Features
 
-- 🔒 **Zero Hallucination**: Only provides data from actual FHIR API calls
-- 🏥 **Comprehensive Data**: Fetches Patient, Observation, Condition, Encounter, MedicationRequest resources
-- 💬 **Natural Language**: Ask questions about patients in plain English
-- 🚫 **No Medical Advice**: Strictly data retrieval, no diagnosis or treatment recommendations
-- 🌐 **FHIR R4 Standard**: Uses official healthcare data standard
-- 💡 **Smart Clarification**: Asks for clarification when queries are ambiguous
+- Natural language interface for FHIR data retrieval
+- Supports Patient, Observation, Condition, Encounter, and MedicationRequest resources
+- Tool-first architecture to prevent hallucination
+- Search, create, and update FHIR resources
 
-## 🏗️ Architecture
+## Setup
 
-```
-HealthCareAgent/
-├── agents/
-│   ├── __init__.py
-│   ├── state.py          # Agent state definitions
-│   ├── nodes.py          # Graph node functions (intent, agent, formatter)
-│   ├── tools.py          # FHIR interaction tools
-│   └── graph.py          # LangGraph workflow definition
-├── utils/
-│   ├── __init__.py
-│   ├── fhir_client.py    # FHIR API client
-│   └── fhir_templates.py # FHIR resource templates
-├── tests/
-│   ├── __init__.py
-│   └── test_fhir_client.py
-├── app.py                # Chainlit application
-├── config.py             # Configuration settings
-├── chainlit.md           # About page for UI
-├── test_agent.py         # Agent test suite
-├── AGENT_BEHAVIOR.md     # Detailed behavior documentation
-├── pyproject.toml        # Project dependencies (managed by uv)
-└── .env.example          # Environment variables template
-```
-
-## 🚀 Getting Started
-
-### 1. Clone and Navigate
-
-```bash
-cd HealthCareAgent
-```
-
-### 2. Install uv (if not already installed)
+### Prerequisites
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 3. Install Dependencies
+### Installation
 
 ```bash
+# Install dependencies
 uv sync
-```
 
-This will automatically create a virtual environment and install all dependencies from `pyproject.toml`.
-
-### 4. Configure Environment
-
-Create a `.env` file from the example:
-
-```bash
+# Configure environment
 cp .env.example .env
+# Edit .env and add your OpenAI API key
 ```
 
-Edit `.env` and add your OpenAI API key:
+### Configuration
 
+Required environment variables in `.env`:
 ```
-OPENAI_API_KEY=sk-your-openai-api-key-here
+OPENAI_API_KEY=your-api-key
 FHIR_BASE_URL=https://hapi.fhir.org/baseR4
 OPENAI_MODEL=gpt-4
 ```
 
-### 5. Run the Application
+### Run
 
 ```bash
 uv run chainlit run app.py
 ```
 
-The application will start at `http://localhost:8000`
+Access the UI at `http://localhost:8000`
 
-## 🧪 Try It Out
+## Usage Examples
 
-**Sample Patient ID**: Try **592598** (often has test data on the public server)
-
-Or search for patients to find valid IDs:
-```
-Search for patients with family name Smith
-```
-
-## Usage
-
-### Query Patient Data
-
-The agent is designed for **patient ID-based queries**. Simply provide a patient ID and ask your question:
-
-**Get Complete Patient Summary:**
+**Patient Data Queries:**
 ```
 Get all data for patient 592598
-Show me everything for patient 1234567
-```
-
-**Specific Resource Queries:**
-```
 What observations does patient 592598 have?
 Show me conditions for patient 1234567
 Get medications for patient 592598
-What are the encounters for patient 1234567?
-Get patient demographics for 592598
 ```
 
-### Search Operations
-
-**Find Patients:**
+**Search Operations:**
 ```
 Search for patients with family name Smith
 Find patients named John Doe
 ```
 
-### General Questions
-
+**Create/Update Resources:**
 ```
-What can you do?
-Explain FHIR resources
-What is the difference between Condition and Observation?
+Create a new patient with name John Doe, gender male, birthdate 1990-01-01
+Update patient 12345 with new address
+Create a blood pressure observation for patient 12345
 ```
 
-## 📋 FHIR Resources Supported
+
+## Supported FHIR Resources
 
 - **Patient**: Demographics, contact info, identifiers
 - **Observation**: Vital signs, lab results, measurements
@@ -137,113 +77,47 @@ What is the difference between Condition and Observation?
 - **Encounter**: Visits, hospitalizations, appointments
 - **MedicationRequest**: Prescriptions, medication orders
 
-## 🔄 Agent Workflow
 
-The agent uses a sophisticated multi-node workflow:
+## Architecture
 
-1. **Intent Classifier**: Analyzes user query, detects patient IDs, identifies required resources
-2. **Agent Node**: Executes FHIR API calls via tools, retrieves real data
-3. **Response Formatter**: Converts FHIR JSON to human-readable responses
+The agent uses a multi-node workflow with LangGraph:
 
-## 🛡️ Agent Behavior Guarantees
+1. **Intent Classifier**: Analyzes queries to determine intent and required FHIR resources
+2. **Agent**: Executes FHIR API calls using LangChain tools and GPT-4
+3. **Response Formatter**: Converts FHIR JSON data into human-readable responses
 
-### What the Agent DOES:
-✅ Retrieves data from **https://hapi.fhir.org/baseR4** only
-✅ Provides accurate, data-backed responses
-✅ Clearly states when data is unavailable
-✅ Asks for clarification on ambiguous queries
-✅ Formats technical FHIR data into readable answers
+### Anti-Hallucination Design
 
-### What the Agent DOES NOT DO:
-❌ Hallucinate or make up patient data
-❌ Provide medical diagnosis or advice
-❌ Infer information not present in FHIR data
-❌ Give treatment recommendations
-❌ Make clinical decisions
+- Tool-first architecture: Agent must fetch data before responding
+- Strict system prompts: Never make up data, only use tool results
+- Result verification: Responses generated strictly from FHIR API data
+- Clear error messaging: Explicitly states when data is unavailable
 
-**For detailed information on how hallucination is prevented**, see [AGENT_BEHAVIOR.md](AGENT_BEHAVIOR.md)
-
-## 🔧 Extending the Agent
-
-### Add New FHIR Resources
-
-1. Add tool functions in `agents/tools.py` for new resource types (e.g., AllergyIntolerance, Procedure)
-2. Update the `healthcare_tools` list
-3. Tools are automatically available to the agent
-
-### Modify Agent Behavior
-
-1. Edit `agents/nodes.py` to adjust the system prompts
-2. Update intent classification logic in `intent_classifier_node`
-3. Customize response formatting
-
-### Enhance the UI
-
-1. Modify `app.py` for custom welcome messages and chat features
-2. Edit `chainlit.md` for the About page
-3. Add custom Chainlit actions and elements
-
-## 📚 Technologies
+## Technologies
 
 - **LangGraph**: Agent workflow orchestration
 - **LangChain**: LLM framework and tools
-- **OpenAI**: GPT models for natural language
+- **OpenAI**: GPT-4 for natural language understanding
 - **Chainlit**: Interactive chat UI
-- **FHIR API**: Healthcare data standard
-- **Python 3.12+**: Modern Python features
-- **UV**: Fast Python package manager
+- **FHIR R4**: Healthcare data standard
+- **Python 3.12+**: Core runtime
 
-## 🧪 Testing
+## Testing
 
-Run the agent test suite:
+Run tests:
 
 ```bash
-uv run python test_agent.py
+uv run pytest tests/
 ```
 
-This will test various query types and validate agent behavior.
-
-## 🔒 Security & Privacy Notes
+## Security & Privacy
 
 - ⚠️ The public FHIR server is for **testing and learning only**
 - ⚠️ Never use real Protected Health Information (PHI)
 - ⚠️ For production, implement authentication and HIPAA compliance
-- ⚠️ Never commit `.env` file with real API keys
 - ℹ️ This is a demonstration system, not for clinical use
 
-## ⚕️ Medical Disclaimer
+## Medical Disclaimer
 
 **IMPORTANT**: This agent is for educational and demonstration purposes only. It does NOT provide medical advice, diagnosis, or treatment recommendations. Always consult qualified healthcare professionals for medical decisions.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Follow the existing code structure
-2. Add tests for new features
-3. Update documentation
-4. Follow PEP 8 style guidelines
-
-## 📖 Documentation
-
-- [AGENT_BEHAVIOR.md](AGENT_BEHAVIOR.md) - Detailed documentation on anti-hallucination mechanisms
-- [chainlit.md](chainlit.md) - About page shown in the UI
-- [FHIR Documentation](https://www.hl7.org/fhir/)
-- [LangGraph Docs](https://langchain-ai.github.io/langgraph/)
-- [Chainlit Docs](https://docs.chainlit.io/)
-
-## License
-
-MIT License - feel free to use for your projects!
-
-## Support
-
-For issues or questions:
-- Check the FHIR API documentation: https://www.hl7.org/fhir/
-- LangGraph docs: https://langchain-ai.github.io/langgraph/
-- Chainlit docs: https://docs.chainlit.io/
-- HAPI FHIR Server: https://hapi.fhir.org/
-
----
-
-Built with ❤️ using LangGraph, OpenAI, and FHIR
